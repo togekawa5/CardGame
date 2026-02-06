@@ -1,6 +1,7 @@
-use bevy::prelude::*;
+use bevy::{prelude::*};
 
 mod playing_cards;
+use playing_cards::CardToken;
 
 fn main() {
     let mut app = App::new();
@@ -30,22 +31,19 @@ fn setup
     });
 
 
-    let card_width = 0.59;
-    let card_height = 0.89;
-    let card_mesh = meshes.add(Rectangle::new(card_width, card_height));
-
+    
     let a_card = playing_cards::PlayingCard::Standard(
         playing_cards::Suite::Clubs,
         playing_cards::Rank::Ace,
     );
-
+    let size = a_card.size();
+    let card_mesh = meshes.add(Rectangle::new(size.0, size.1));
     let base_color: Handle<Image> = asset_server.load(
-        &playing_cards::front_texture_path(a_card)
+        &a_card.front_texture_path()
     );
     let back_color: Handle<Image> = asset_server.load(
-        &playing_cards::back_texture_path()
+        &a_card.back_texture_path()
     );
-
     let front_material = materials.add(StandardMaterial {
         base_color_texture: Some(base_color.clone()),
         ..Default::default()
@@ -55,29 +53,54 @@ fn setup
         ..Default::default()
     });
 
-    commands.spawn((
-        Rotating { speed: 1.0 },
-        Transform::from_xyz(0.0, 0.0, 0.0),
-        children![
-            (
-                Mesh3d(card_mesh.clone()),
-                MeshMaterial3d(front_material.clone()),
-                Transform::from_xyz(0.0, 0.0, 0.0),
-            ),
-            (
-                Mesh3d(card_mesh.clone()),
-                MeshMaterial3d(back_material.clone()),
-                Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)
-            ),
-    )
-        ],
-    ));
+    spawn_card(
+        &mut commands,
+        card_mesh.clone(),
+        front_material.clone(),
+        back_material.clone(),
+    );
+
+    let random_card = playing_cards::PlayingCard::from(24);
+    let random_card_color = asset_server.load(
+        &random_card.front_texture_path()
+    );
+    let random_front_mat = materials.add(StandardMaterial {
+        base_color_texture: Some(random_card_color.clone()),
+        ..Default::default()
+    });
+    let card2_id = spawn_card(&mut commands, card_mesh.clone(), random_front_mat.clone(), back_material.clone());
+    commands.entity(card2_id).insert(Transform::from_xyz(-0.7, 0.0, 0.0));
 
 }
 
 #[derive(Component)]
 struct Rotating{
     speed: f32,
+}
+
+fn spawn_card(
+    commands: &mut Commands,
+    mesh: Handle<Mesh>,
+    front_material: Handle<StandardMaterial>,
+    back_material: Handle<StandardMaterial>,
+) -> Entity {
+    commands.spawn((
+        Rotating { speed: 1.0 },
+        Transform::from_xyz(0.0, 0.0, 0.0),
+        children![
+            (
+                Mesh3d(mesh.clone()),
+                MeshMaterial3d(front_material.clone()),
+                Transform::from_xyz(0.0, 0.0, 0.0),
+            ),
+            (
+                Mesh3d(mesh.clone()),
+                MeshMaterial3d(back_material.clone()),
+                Transform::from_rotation(Quat::from_rotation_y(std::f32::consts::PI)
+            ),
+    )
+        ],
+    )).id()
 }
 
 
