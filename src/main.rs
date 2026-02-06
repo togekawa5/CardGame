@@ -1,7 +1,8 @@
 use bevy::{prelude::*};
 
 mod playing_cards;
-use playing_cards::CardToken;
+mod card_token;
+use crate::card_token::CardToken;
 
 fn main() {
     let mut app = App::new();
