@@ -25,6 +25,7 @@ pub enum Rank{
     King,
 }
 
+#[derive(Debug)]
 pub enum PlayingCard {
     Standard(Suite, Rank),
     Joker(i32), // 1 or 2 jokers
@@ -172,5 +173,101 @@ fn back_texture_path() -> String {
     format!("textures/playing_cards/card_back.png")
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    // ─── From<i32> スイート割り当てテスト ────────────────────────────────────────
 
+    #[test]
+    fn from_i32_spades_range() {
+        // 0..=12 → Spades
+        assert!(matches!(PlayingCard::from(0),  PlayingCard::Standard(Suite::Spades, Rank::Ace)));
+        assert!(matches!(PlayingCard::from(12), PlayingCard::Standard(Suite::Spades, Rank::King)));
+    }
+
+    #[test]
+    fn from_i32_hearts_range() {
+        // 13..=25 → Hearts
+        assert!(matches!(PlayingCard::from(13), PlayingCard::Standard(Suite::Hearts, Rank::Ace)));
+        assert!(matches!(PlayingCard::from(25), PlayingCard::Standard(Suite::Hearts, Rank::King)));
+    }
+
+    #[test]
+    fn from_i32_diamonds_range() {
+        // 26..=38 → Diamonds
+        assert!(matches!(PlayingCard::from(26), PlayingCard::Standard(Suite::Diamonds, Rank::Ace)));
+        assert!(matches!(PlayingCard::from(38), PlayingCard::Standard(Suite::Diamonds, Rank::King)));
+    }
+
+    #[test]
+    fn from_i32_clubs_range() {
+        // 39..=51 → Clubs
+        assert!(matches!(PlayingCard::from(39), PlayingCard::Standard(Suite::Clubs, Rank::Ace)));
+        assert!(matches!(PlayingCard::from(51), PlayingCard::Standard(Suite::Clubs, Rank::King)));
+    }
+
+    // ─── From<i32> ランク順テスト ─────────────────────────────────────────────
+
+    #[test]
+    fn from_i32_rank_order_in_spades() {
+        // Spades (0..13)：オフセットがそのままランクに対応する
+        let expected = [
+            Rank::Ace, Rank::Two, Rank::Three, Rank::Four, Rank::Five,
+            Rank::Six, Rank::Seven, Rank::Eight, Rank::Nine, Rank::Ten,
+            Rank::Jack, Rank::Queen, Rank::King,
+        ];
+        for (offset, expected_rank) in expected.iter().enumerate() {
+            match PlayingCard::from(offset as i32) {
+                PlayingCard::Standard(Suite::Spades, rank) => {
+                    assert_eq!(&rank, expected_rank, "index={offset}");
+                }
+                other => panic!("index={offset}: Spades を期待したが {:?}", other),
+            }
+        }
+    }
+
+    // ─── 52 枚すべてが Standard カード ────────────────────────────────────────
+
+    #[test]
+    fn from_i32_all_52_are_standard() {
+        for i in 0..52_i32 {
+            assert!(
+                matches!(PlayingCard::from(i), PlayingCard::Standard(_, _)),
+                "index={i} は Standard カードであるべき"
+            );
+        }
+    }
+
+    // ─── ジョーカーテスト ─────────────────────────────────────────────────────
+
+    #[test]
+    fn from_i32_joker() {
+        assert!(matches!(PlayingCard::from(52), PlayingCard::Joker(0)));
+        assert!(matches!(PlayingCard::from(53), PlayingCard::Joker(1)));
+    }
+
+    // ─── テクスチャパステスト ─────────────────────────────────────────────────
+
+    #[test]
+    fn texture_path_format() {
+        // パス形式を確認
+        let card = PlayingCard::Standard(Suite::Hearts, Rank::Ace);
+        assert_eq!(card.front_texture_path(), "textures/playing_cards/card_heart_01.png");
+
+        let card = PlayingCard::Standard(Suite::Spades, Rank::King);
+        assert_eq!(card.front_texture_path(), "textures/playing_cards/card_spade_13.png");
+
+        let card = PlayingCard::Standard(Suite::Diamonds, Rank::Ten);
+        assert_eq!(card.front_texture_path(), "textures/playing_cards/card_diamond_10.png");
+
+        let card = PlayingCard::Standard(Suite::Clubs, Rank::Jack);
+        assert_eq!(card.front_texture_path(), "textures/playing_cards/card_club_11.png");
+    }
+
+    #[test]
+    fn back_texture_path_format() {
+        let card = PlayingCard::Standard(Suite::Hearts, Rank::Ace);
+        assert_eq!(card.back_texture_path(), "textures/playing_cards/card_back.png");
+    }
+}
